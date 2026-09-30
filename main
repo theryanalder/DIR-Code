@@ -1,0 +1,185 @@
+import random
+import time
+
+
+Damage = 20
+Health = 200
+
+
+City_Grid = []
+for i in range(5):
+   row = []
+   for j in range(5):
+       row.append(".")
+   City_Grid.append(row)
+
+
+City_Grid[0][0] = "D"
+City_Grid[4][4] = "S"
+
+
+def place_random(symbol):
+   while True:
+       r = random.randint(1, 3)
+       c = random.randint(0, 4)
+       if City_Grid[r][c] == ".":
+           City_Grid[r][c] = symbol
+           break
+
+
+place_random("E")
+place_random("E")
+place_random("P")
+place_random("P")
+
+
+E, R = 0, 0
+
+
+print("City Map:")
+for row in City_Grid:
+   print(" ".join(row))
+
+
+
+
+class Enemy:
+   def __init__(self, e_health, e_damage, enemy_name):
+       self.health = e_health
+       self.damage = e_damage
+       self.enemy_name = enemy_name
+
+
+class Zombie(Enemy):
+   def __init__(self, e_health, e_damage, enemy_name):
+       super().__init__(e_health, e_damage, enemy_name)
+
+
+   def attack(self, current_player_health, player_damage):
+       while self.health > 0 and current_player_health > 0:
+           choice = input(f"A {self.enemy_name} appears! Do you want to do Fire Blast ({player_damage} Damage)? : ").upper()
+           if choice in ["YES", "FIRE BLAST", "Y"]:
+               self.health -= player_damage
+               print(f"You hit the {self.enemy_name} for {player_damage} damage! (Enemy HP: {max(0, self.health)})")
+              
+               if self.health <= 0:
+                   print(f"The {self.enemy_name} is defeated!")
+                   time.sleep(2)
+                   return current_player_health, True
+              
+               current_player_health -= self.damage
+               print(f"The {self.enemy_name} hits you for {self.damage} damage! (Your HP: {max(0, current_player_health)})")
+               time.sleep(2)
+               if current_player_health <= 0:
+                   print("\nGAME OVER")
+                   time.sleep(2)
+                   return current_player_health, False
+           else:
+               print("Invalid attack choice!")
+       return current_player_health, True
+          
+class Robot(Enemy):
+   def __init__(self, e_health, e_damage, enemy_name):
+       super().__init__(e_health, e_damage, enemy_name)
+
+
+   def attack(self, current_player_health, player_damage):
+       while self.health > 0 and current_player_health > 0:
+           choice = input(f"A {self.enemy_name} appears! Do you want to do Fire Blast ({player_damage} Damage)? : ").upper()
+           if choice in ["YES", "FIRE BLAST", "Y"]:
+               self.health -= player_damage
+               print(f"You hit the {self.enemy_name} for {player_damage} damage! (Enemy HP: {max(0, self.health)})")
+              
+               if self.health <= 0:
+                   print(f"The {self.enemy_name} is defeated!")
+                   time.sleep(2)
+                   return current_player_health, True
+              
+               current_player_health -= self.damage
+               print(f"The {self.enemy_name} hits you for {self.damage} damage! (Your HP: {max(0, current_player_health)})")
+               time.sleep(2)
+               if current_player_health <= 0:
+                   print("\nGAME OVER")
+                   time.sleep(2)
+                   return current_player_health, False
+           else:
+               print("Invalid attack choice!")
+       return current_player_health, True
+          
+def fight(current_health, player_damage):
+   random_enemy = random.choice([
+       Zombie(100, 25, "Zombie"),
+       Robot(150, 35, "Robot")
+   ])
+   return random_enemy.attack(current_health, player_damage)
+
+
+while True:
+   print(f"\nYour health is: {Health}")
+   print(f"Your Damage is: {Damage}")
+   location = input("Where do you want to go? (W/A/S/D): ").upper()
+  
+   if location not in ["W", "A", "S", "D"]:
+       print("Invalid direction!")
+       continue
+
+
+   new_E, new_R = E, R
+   if location == "W":
+       new_E -= 1
+   elif location == "A":
+       new_R -= 1
+   elif location == "S":
+       new_E += 1
+   elif location == "D":
+       new_R += 1
+
+
+   if not (0 <= new_E <= 4 and 0 <= new_R <= 4):
+       print("Invalid Direction!")
+       continue
+
+
+   target_tile = City_Grid[new_E][new_R]
+
+
+   if target_tile == "S":
+       enemies_remaining = False
+       for row in City_Grid:
+           if "E" in row:
+               enemies_remaining = True
+               break
+              
+       if enemies_remaining:
+           print("You need to defeat all of the enemies!")
+           time.sleep(2)
+           continue
+       else:
+           print("\nYOU WIN!")
+           break
+
+
+   elif target_tile == "E":
+       Health, survived = fight(Health, Damage)
+       if not survived:
+           break
+       City_Grid[new_E][new_R] = "."
+
+
+   elif target_tile == "P":
+       print("\nYou got a power-up! Damage increased by 40!")
+       Damage += 40
+       time.sleep(2)
+       City_Grid[new_E][new_R] = "."
+
+
+   City_Grid[E][R] = "."
+   E, R = new_E, new_R
+   City_Grid[E][R] = "D"
+
+
+   print("\nCity Map:")
+   for row in City_Grid:
+       print(" ".join(row))
+
+
