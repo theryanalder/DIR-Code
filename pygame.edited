@@ -1,0 +1,293 @@
+import random
+import time
+import pygame
+
+pygame.init()
+screen = pygame.display.set_mode((1280, 720))
+pygame.display.set_caption("City Grid RPG")
+clock = pygame.time.Clock()
+combat_log = "Use W/A/S/D or Arrow Keys to move around the grid."
+running = True
+Damage = 20
+Health = 200
+game_state = "MAP"
+font = pygame.font.Font(None, 36)
+large_font = pygame.font.Font(None, 50)
+City_Grid = []
+
+
+for i in range(5):
+   row = []
+   for j in range(5):
+       row.append(".")
+   City_Grid.append(row)
+
+
+City_Grid[0][0] = "D"
+City_Grid[4][4] = "S"
+
+
+def place_random(symbol):
+   while True:
+       r = random.randint(1, 3)
+       c = random.randint(0, 4)
+       if City_Grid[r][c] == ".":
+           City_Grid[r][c] = symbol
+           break
+
+
+place_random("E")
+place_random("E")
+place_random("P")
+place_random("P")
+current_enemy = None
+
+E, R = 0, 0
+
+
+print("City Map:")
+for row in City_Grid:
+   print(" ".join(row))
+
+
+
+
+class Enemy:
+   def __init__(self, e_health, e_damage, enemy_name):
+       self.health = e_health
+       self.damage = e_damage
+       self.enemy_name = enemy_name
+
+
+class Zombie(Enemy):
+   def __init__(self, e_health, e_damage, enemy_name):
+       super().__init__(e_health, e_damage, enemy_name)
+
+
+   def attack(self, current_player_health, player_damage):
+       while self.health > 0 and current_player_health > 0:
+           choice = input(f"A {self.enemy_name} appears! Do you want to do Fire Blast ({player_damage} Damage)? : ").upper()
+           if choice in ["YES", "FIRE BLAST", "Y"]:
+               self.health -= player_damage
+               print(f"You hit the {self.enemy_name} for {player_damage} damage! (Enemy HP: {max(0, self.health)})")
+              
+               if self.health <= 0:
+                   print(f"The {self.enemy_name} is defeated!")
+                   time.sleep(2)
+                   return current_player_health, True
+              
+               current_player_health -= self.damage
+               print(f"The {self.enemy_name} hits you for {self.damage} damage! (Your HP: {max(0, current_player_health)})")
+               time.sleep(2)
+               if current_player_health <= 0:
+                   print("\nGAME OVER")
+                   time.sleep(2)
+                   return current_player_health, False
+           else:
+               print("Invalid attack choice!")
+       return current_player_health, True
+          
+class Robot(Enemy):
+   def __init__(self, e_health, e_damage, enemy_name):
+       super().__init__(e_health, e_damage, enemy_name)
+
+
+   def attack(self, current_player_health, player_damage):
+       while self.health > 0 and current_player_health > 0:
+           choice = input(f"A {self.enemy_name} appears! Do you want to do Fire Blast ({player_damage} Damage)? : ").upper()
+           if choice in ["YES", "FIRE BLAST", "Y"]:
+               self.health -= player_damage
+               print(f"You hit the {self.enemy_name} for {player_damage} damage! (Enemy HP: {max(0, self.health)})")
+              
+               if self.health <= 0:
+                   print(f"The {self.enemy_name} is defeated!")
+                   time.sleep(2)
+                   return current_player_health, True
+              
+               current_player_health -= self.damage
+               print(f"The {self.enemy_name} hits you for {self.damage} damage! (Your HP: {max(0, current_player_health)})")
+               time.sleep(2)
+               if current_player_health <= 0:
+                   print("\nGAME OVER")
+                   time.sleep(2)
+                   return current_player_health, False
+           else:
+               print("Invalid attack choice!")
+       return current_player_health, True
+          
+def fight(current_health, player_damage):
+   random_enemy = random.choice([
+       Zombie(100, 25, "Zombie"),
+       Robot(150, 35, "Robot")
+   ])
+   return random_enemy.attack(current_health, player_damage)
+
+def check_enemies_remaining():
+    for row in City_Grid:
+        for tile in row:
+            if tile == "E":
+                return True
+    return False
+
+
+
+while running:
+    x = time.time()
+    # Handle user input events
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Clear screen with a color
+    screen.fill("purple")
+
+    # Update display
+    pygame.display.flip()
+    clock.tick(60)
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+        elif event.type == pygame.KEYDOWN:
+
+            if game_state == "MAP":
+
+                new_E, new_R = E, R  # like the events
+
+                if event.key in [pygame.K_w, pygame.K_UP]:
+                    new_E -= 1
+
+                elif event.key in [pygame.K_s, pygame.K_DOWN]:
+                    new_E += 1
+
+                elif event.key in [pygame.K_a, pygame.K_LEFT]:
+                    new_R -= 1
+
+                elif event.key in [pygame.K_d, pygame.K_RIGHT]:
+                    new_R += 1
+
+                else:
+                    continue
+
+                if 0 <= new_E <= 4 and 0 <= new_R <= 4:
+
+                    target_tile = City_Grid[new_E][new_R]
+
+                    # ts for the checking of the tiles
+
+                    if target_tile == "S":
+
+                        if check_enemies_remaining():
+                            combat_log = "You need to defeat all of the enemies first!"
+
+                        else:
+                            game_state = "WIN"
+
+                    elif target_tile == "P":
+
+                        Damage += 40
+
+                        combat_log = "You got a power-up! Damage increased by 40!"
+
+                        # erase old tile
+
+                        City_Grid[E][R] = "."
+                        E, R = new_E, new_R
+                        City_Grid[E][R] = "D"
+
+                    elif target_tile == "E":
+
+                        # i js chose random names
+
+                        current_enemy = random.choice([
+                            Enemy(100, 25, "Zombie"),
+                            Enemy(150, 35, "Robot")
+                        ])
+
+                        combat_log = f"A {current_enemy.enemy_name} appears! Press [F] to Fire Blast!"
+
+                        game_state = "COMBAT"
+
+                        City_Grid[E][R] = "."
+                        E, R = new_E, new_R
+                        City_Grid[E][R] = "D"
+
+                    else:  # Empty tile "."
+
+                        City_Grid[E][R] = "."
+                        E, R = new_E, new_R
+                        City_Grid[E][R] = "D"
+
+                        combat_log = ""
+
+                else:
+
+                    combat_log = "Invalid Direction! You can't go off map."
+
+            elif game_state == "COMBAT" and current_enemy:
+
+                if event.key == pygame.K_f:
+
+                    current_enemy.health -= Damage
+
+                    combat_log = f"You hit {current_enemy.enemy_name} for {Damage} damage!"
+
+                    if current_enemy.health <= 0:
+
+                        combat_log = f"The {current_enemy.enemy_name} is defeated."
+
+                        game_state = "MAP"
+
+                        current_enemy = None
+
+                    else:
+
+                        Health -= current_enemy.damage
+
+                        combat_log += f" It hits u for {current_enemy.damage} damage!"
+
+                        if Health <= 0:
+
+                            game_state = "GAMEOVER"
+    screen.fill((40, 20, 60))  # purple because it looks cool :)
+
+    if game_state in ["MAP", "COMBAT"]:
+        hp_surface = font.render(f"Player HP: {max(0, Health)}", True, "green" if Health > 60 else "red")
+        dmg_surface = font.render(f"Player Damage: {Damage}", True, "cyan")
+        screen.blit(hp_surface, (50, 50))
+        screen.blit(dmg_surface, (50, 90))
+
+        grid_start_x, grid_start_y = 550, 150
+        cell_spacing = 70
+        for r_idx, row in enumerate(City_Grid):
+            for c_idx, symbol in enumerate(row):
+                # Color code specific elements for clear visuals
+                color = "white"
+                if symbol == "D": color = "yellow"    # Player
+                elif symbol == "E": color = "red"      # Enemy
+                elif symbol == "P": color = "cyan"     # Power-Up
+                elif symbol == "S": color = "green"    # Safe Zone
+                
+                symbol_surface = large_font.render(symbol, True, color)
+                screen.blit(symbol_surface, (grid_start_x + (c_idx * cell_spacing), grid_start_y + (r_idx * cell_spacing)))
+
+            log_surface = font.render(combat_log, True, "orange")
+            screen.blit(log_surface, (50, 580))
+
+            if game_state == "COMBAT" and current_enemy:
+                enemy_surface = font.render(f"Enemy: {current_enemy.enemy_name} | HP: {max(0, current_enemy.health)}", True, "red")
+                screen.blit(enemy_surface, (50, 220))
+
+    elif game_state == "WIN":
+        y = time.time()-x
+        win_text = large_font.render(f"YOU WIN! YOU ESCAPED THE CITY IN {y} SECONDS!", True, "green")
+        screen.blit(win_text, (320, 320))
+
+    elif game_state == "GAMEOVER":
+        lose_text = large_font.render("GAME OVER. YOU DIED.", True, "red")
+        screen.blit(lose_text, (450, 320))
+
+    pygame.display.flip()
+    clock.tick(60)
+
+pygame.quit()
